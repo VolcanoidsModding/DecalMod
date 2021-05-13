@@ -1,16 +1,15 @@
-﻿using System;
-using System.Collections;
-using System.IO;
+﻿using System.IO;
 using System.Linq;
 using Base_Mod;
 using JetBrains.Annotations;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace Decal_Loader {
     [UsedImplicitly]
     public class Plugin : BaseGameMod {
-        protected override string ModName => "Decal-Loader";
+        protected override string        ModName => "Decal-Loader";
+        private            bool          done;
+        private            DecalCategory category;
 
         protected override void Init() {
             Database.Init(GetConfigPath(), GetConfigFile());
@@ -18,26 +17,11 @@ namespace Decal_Loader {
             base.Init();
         }
 
-        protected override void OnIslandSceneLoaded(Scene scene, LoadSceneMode loadSceneMode) {
-            base.OnIslandSceneLoaded(scene, loadSceneMode);
+        protected override void OnDataSetup() {
+            base.OnDataSetup();
 
-            var rootGameObject = scene.GetRootGameObjects()[0];
-            if (!rootGameObject.HasComponent<LocalDecalLoader>()) {
-                var localDecalLoader = rootGameObject.AddComponent<LocalDecalLoader>();
-                localDecalLoader.loadImagePath = GetConfigPath();
-            }
-        }
-    }
-
-    [UsedImplicitly]
-    public class LocalDecalLoader : MonoBehaviour {
-        public  string        loadImagePath;
-        private bool          done;
-        private DecalCategory category;
-
-        [UsedImplicitly]
-        public void Start() {
-            if (done || !Directory.Exists(loadImagePath)) return;
+            var loadImagePath = GetConfigPath();
+            if (!Directory.Exists(loadImagePath)) return;
 
             category = CreateDecalCategory();
 
@@ -48,9 +32,7 @@ namespace Decal_Loader {
                                                 || file.EndsWith(".bmp"));
 
             foreach (var file in files) {
-                var absoluteUri = new Uri(file).AbsoluteUri;
-                var request     = new WWW(absoluteUri);
-                StartCoroutine(WaitForRequest(request));
+                CreateDecal(file);
             }
 
             done = true;
@@ -58,7 +40,7 @@ namespace Decal_Loader {
 
         private static DecalCategory CreateDecalCategory() {
             const string name            = "Modded";
-            var          localizedString = new LocalizedString(".", name, name, name);
+            var          localizedString = new LocalizedString("decals.category.modded", name, ".");
             var          category        = ScriptableObject.CreateInstance<DecalCategory>();
             category.name             = localizedString;
             category.NameLocalization = localizedString;
@@ -74,23 +56,15 @@ namespace Decal_Loader {
             return category;
         }
 
-        private IEnumerator WaitForRequest(WWW request) {
-            yield return request;
-
-            if (request.error != null) {
-                Debug.Log("Error: Request error.");
-                yield break;
-            }
-
-            var uri  = request.url;
-            var guid = Database.instance.GetGuidForUri(uri);
+        private void CreateDecal(string file) {
+            var guid = Database.instance.GetGuidForUri(file);
             if (guid == null) {
                 guid = GUID.Create();
-                Database.instance.Add(uri, (GUID) guid);
+                Database.instance.Add(file, (GUID) guid);
             }
 
-            var decalResource = (DecalResource) ScriptableObject.CreateInstance(typeof(DecalResource));
-            decalResource.Resource = request.texture;
+            var decalResource = ScriptableObject.CreateInstance<DecalResource>();
+            decalResource.Resource = LoadTexture(file);
             decalResource.Category = category;
 
             RuntimeAssetStorage.Add(new[] {
@@ -100,7 +74,14 @@ namespace Decal_Loader {
                     Labels = new string[0]
                 }
             });
-            Debug.Log($"Loaded decal: {uri}.");
+            Debug.Log($"Loaded decal: {file}.");
+        }
+
+        private Texture2D LoadTexture(string file) {
+            var fileData = File.ReadAllBytes(file);
+            var tex      = new Texture2D(1, 1);
+            tex.LoadImage(fileData);
+            return tex;
         }
     }
 }
