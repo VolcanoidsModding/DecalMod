@@ -8,7 +8,6 @@ namespace Decal_Loader {
     [UsedImplicitly]
     public class Plugin : BaseGameMod {
         protected override string        ModName => "Decal-Loader";
-        private            bool          done;
         private            DecalCategory category;
 
         protected override void Init() {
@@ -34,8 +33,6 @@ namespace Decal_Loader {
             foreach (var file in files) {
                 CreateDecal(file);
             }
-
-            done = true;
         }
 
         private static DecalCategory CreateDecalCategory() {
