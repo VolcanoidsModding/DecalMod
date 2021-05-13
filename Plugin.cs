@@ -31,23 +31,15 @@ namespace Decal_Loader {
 
     [UsedImplicitly]
     public class LocalDecalLoader : MonoBehaviour {
-        private static readonly GUID          MISC = GUID.Parse("447cd4412885bf44d9b1a5ffaddb3c23");
-        public                  string        loadImagePath;
-        private                 bool          done;
-        private                 DecalCategory category;
+        public  string        loadImagePath;
+        private bool          done;
+        private DecalCategory category;
 
         [UsedImplicitly]
         public void Start() {
             if (done || !Directory.Exists(loadImagePath)) return;
 
-            category = (from dResource in RuntimeAssetStorage.GetAssets<DecalResource>()
-                        where dResource.Category.AssetId == MISC
-                        select dResource.Category).FirstOrDefault();
-
-            if (category == null) {
-                Debug.Log("Error: No category found.");
-                return;
-            }
+            category = CreateDecalCategory();
 
             var files = Directory.EnumerateFiles(loadImagePath, "*", SearchOption.TopDirectoryOnly)
                                  .Where(file => file.EndsWith(".png")
@@ -64,6 +56,24 @@ namespace Decal_Loader {
             done = true;
         }
 
+        private static DecalCategory CreateDecalCategory() {
+            const string name            = "Modded";
+            var          localizedString = new LocalizedString(".", name, name, name);
+            var          category        = ScriptableObject.CreateInstance<DecalCategory>();
+            category.name             = localizedString;
+            category.NameLocalization = localizedString;
+            LocalizationManager.Localize(category);
+
+            RuntimeAssetStorage.Add(new[] {
+                new AssetReference {
+                    Object = category,
+                    Guid   = GUID.Create(), // Doesn't matter. Category is transient.
+                    Labels = new string[0]
+                }
+            });
+            return category;
+        }
+
         private IEnumerator WaitForRequest(WWW request) {
             yield return request;
 
@@ -75,7 +85,6 @@ namespace Decal_Loader {
             var uri  = request.url;
             var guid = Database.instance.GetGuidForUri(uri);
             if (guid == null) {
-                Debug.Log("Making new guid.");
                 guid = GUID.Create();
                 Database.instance.Add(uri, (GUID) guid);
             }
