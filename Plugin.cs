@@ -1,6 +1,8 @@
 ﻿using System.IO;
 using System.Linq;
 using Base_Mod;
+using Decal_Loader.lib;
+using Decal_Loader.lib.scripts;
 using JetBrains.Annotations;
 using UnityEngine;
 
@@ -22,7 +24,7 @@ namespace Decal_Loader {
             var loadImagePath = GetConfigPath();
             if (!Directory.Exists(loadImagePath)) return;
 
-            category = CreateDecalCategory();
+            category = CreateDecalCategory("Modded");
 
             var files = Directory.EnumerateFiles(loadImagePath, "*", SearchOption.TopDirectoryOnly)
                                  .Where(file => file.EndsWith(".png")
@@ -33,11 +35,14 @@ namespace Decal_Loader {
             foreach (var file in files) {
                 CreateDecal(file);
             }
+
+            new DecalBundles(loadImagePath);
+            DecalBundles.Init();
         }
 
-        private static DecalCategory CreateDecalCategory() {
-            const string name            = "Modded";
-            var          localizedString = new LocalizedString("decals.category.modded", name, ".");
+        private static DecalCategory CreateDecalCategory(string name) {
+            string lcName = name.ToLower();
+            var          localizedString = new LocalizedString("decals.category." + lcName, name, ".");
             var          category        = ScriptableObject.CreateInstance<DecalCategory>();
             category.name             = localizedString;
             category.NameLocalization = localizedString;
