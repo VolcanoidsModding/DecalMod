@@ -11,15 +11,13 @@ namespace Decal_Loader {
         private            DecalCategory category;
 
         protected override void Init() {
-            Database.Init(GetConfigPath(), GetConfigFile());
+            Database.Init(PersistentDataDir, GetConfigFile());
 
             base.Init();
         }
 
-        protected override void OnDataSetup() {
-            base.OnDataSetup();
-
-            var loadImagePath = GetConfigPath();
+        public override void OnInitData() {
+            var loadImagePath = PersistentDataDir;
             if (!Directory.Exists(loadImagePath)) return;
 
             category = CreateDecalCategory();
@@ -30,48 +28,34 @@ namespace Decal_Loader {
                                                 || file.EndsWith(".jpeg")
                                                 || file.EndsWith(".bmp"));
 
+            var log = new LogBuffer();
             foreach (var file in files) {
-                CreateDecal(file);
+                CreateDecal(file, log);
             }
+            log.Flush();
+
+            base.OnInitData();
         }
 
         private static DecalCategory CreateDecalCategory() {
-            const string name            = "Modded";
-            var          localizedString = new LocalizedString("decals.category.modded", name, ".");
-            var          category        = ScriptableObject.CreateInstance<DecalCategory>();
-            category.name             = localizedString;
-            category.NameLocalization = localizedString;
+            var category = CreateAndRegister<DecalCategory>(GUID.Create()); // GUID doesn't matter. Category is transient.
+            category.NameLocalization = new LocalizedString("decals.category.modded", "Modded", ".");
             LocalizationManager.Localize(category);
-
-            RuntimeAssetStorage.Add(new[] {
-                new AssetReference {
-                    Object = category,
-                    Guid   = GUID.Create(), // Doesn't matter. Category is transient.
-                    Labels = new string[0]
-                }
-            });
             return category;
         }
 
-        private void CreateDecal(string file) {
+        private void CreateDecal(string file, LogBuffer log) {
             var guid = Database.instance.GetGuidForUri(file);
             if (guid == null) {
                 guid = GUID.Create();
                 Database.instance.Add(file, (GUID) guid);
             }
 
-            var decalResource = ScriptableObject.CreateInstance<DecalResource>();
+            var decalResource = CreateAndRegister<DecalResource>((GUID) guid);
             decalResource.Resource = LoadTexture(file);
             decalResource.Category = category;
 
-            RuntimeAssetStorage.Add(new[] {
-                new AssetReference {
-                    Object = decalResource,
-                    Guid   = (GUID) guid,
-                    Labels = new string[0]
-                }
-            });
-            Debug.Log($"Loaded decal: {file}.");
+            log.WriteLine($"Loaded decal: {file}.");
         }
 
         private Texture2D LoadTexture(string file) {
