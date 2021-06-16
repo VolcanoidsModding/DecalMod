@@ -38,11 +38,25 @@ namespace Decal_Loader {
         }
 
         public GUID? GetGuidForUri(string uri) {
+            uri = SanitizeUrl(uri);
+
             if (data.ContainsKey(uri)) return GUID.Parse(data[uri]);
             return null;
         }
 
+        /**
+         * Removes the config path from the URI if present.
+         * Also replaces `\` with `/`.
+         *
+         * This ensures that any given file should compute to the same URI no matter where the user's app data folder is, or what OS the game is running on.
+         */
+        private string SanitizeUrl(string uri) {
+            return uri.Replace(configPath, "").Replace(@"\", "/");
+        }
+
         public void Add(string uri, GUID guid) {
+            uri = SanitizeUrl(uri);
+
             data[uri] = guid.ToString();
 
             Save();
