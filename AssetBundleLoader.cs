@@ -55,7 +55,7 @@ namespace Decal_Loader {
                 Database.instance.Add(file, (GUID) guid);
             }
 
-            RegisterDecal(category, (GUID) guid, texture, log);
+            RegisterDecal(category, (GUID) guid, texture);
             log.WriteLine($"Loaded decal: {file}.");
         }
     }

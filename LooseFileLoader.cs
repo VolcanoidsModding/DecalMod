@@ -34,7 +34,7 @@ namespace Decal_Loader {
             }
 
             var texture = LoadTexture(file);
-            RegisterDecal(category, (GUID) guid, texture, log);
+            RegisterDecal(category, (GUID) guid, texture);
             log.WriteLine($"Loaded decal: {file}.");
         }
     }
