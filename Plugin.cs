@@ -5,8 +5,6 @@ using JetBrains.Annotations;
 namespace Decal_Loader {
     [UsedImplicitly]
     public class Plugin : BaseGameMod {
-        protected override string ModName => "Decal-Loader";
-
         protected override void Init() {
             Database.Init(PersistentDataDir, GetConfigFile());
 

@@ -1,4 +1,7 @@
 {
     "LoadGroup": 0,
-    "Version": "1.1.2"
+    "Version": "1.1.2",
+    "UniqueModId": "Decal-Loader",
+    "Title": "Decal Loader",
+    "MultiplayerMode": 0
 }
