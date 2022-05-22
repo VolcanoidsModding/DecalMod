@@ -17,14 +17,14 @@ namespace Decal_Loader {
         protected abstract void Load();
 
         protected static DecalCategory CreateDecalCategory(string categoryName) {
-            var category = GameMod.CreateAndRegister<DecalCategory>(GUID.Create()); // GUID doesn't matter. Category is transient.
+            var category = GameMod.CreateAndRegister<DecalCategory>(GUID.Create(), null); // GUID doesn't matter. Category is transient.
             category.NameLocalization = new LocalizedString($"decals.category.{categoryName}", categoryName, ".");
             LocalizationManager.Localize(category);
             return category;
         }
 
         protected static void RegisterDecal(DecalCategory category, GUID guid, Texture2D texture) {
-            var decalResource = GameMod.CreateAndRegister<DecalResource>(guid);
+            var decalResource = GameMod.CreateAndRegister<DecalResource>(guid, null);
             decalResource.Resource = texture;
             decalResource.Category = category;
         }
