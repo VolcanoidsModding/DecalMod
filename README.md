@@ -1,5 +1,5 @@
 # Volcanoids Decal Loader
-Put any images files you want in `%LOCALAPPDATA%Low\Volcanoid\Volcanoids\PersistentModData\_Decal-Loader`
+Put any images files you want in `%LOCALAPPDATA%Low\Volcanoid\Volcanoids\PersistentModData\Decal-Loader`
 
 They will load and be usable in game. They all appear in the "Modded" category.
 
