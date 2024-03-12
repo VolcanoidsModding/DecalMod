@@ -4,72 +4,70 @@ using System.IO;
 using Newtonsoft.Json;
 using UnityEngine;
 
-namespace Decal_Loader {
-    public class Database {
-        public static    Database                   instance { get; private set; }
-        private readonly string                     configPath;
-        private readonly string                     configFile;
-        private          Dictionary<string, string> data; // <uri, guid>
+namespace Decal_Loader;
 
-        public static void Init(string configPath, string configFile) {
-            instance = new Database(configPath, configFile);
-        }
+public class Database {
+    public static    Database                   instance { get; private set; }
+    private readonly string                     configPath;
+    private readonly string                     configFile;
+    private          Dictionary<string, string> data; // <uri, guid>
 
-        private Database(string configPath, string configFile) {
-            this.configPath = configPath;
-            this.configFile = configFile;
+    public static void Init(string configPath, string configFile) {
+        instance = new(configPath, configFile);
+    }
 
-            Load();
-        }
+    private Database(string configPath, string configFile) {
+        this.configPath = configPath;
+        this.configFile = configFile;
 
-        private void Load() {
-            try {
-                if (File.Exists(configFile)) {
-                    var json = File.ReadAllText(configFile);
-                    data = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
-                }
-            } catch (Exception e) {
-                Debug.LogError(e.Message);
+        Load();
+    }
+
+    private void Load() {
+        try {
+            if (File.Exists(configFile)) {
+                var json = File.ReadAllText(configFile);
+                data = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
             }
-
-            if (data == null) {
-                data = new Dictionary<string, string>();
-            }
+        } catch (Exception e) {
+            Debug.LogError(e.Message);
         }
 
-        public GUID? GetGuidForUri(string uri) {
-            uri = SanitizeUrl(uri);
+        data ??= [];
+    }
 
-            if (data.ContainsKey(uri)) return GUID.Parse(data[uri]);
-            return null;
-        }
+    public GUID? GetGuidForUri(string uri) {
+        uri = SanitizeUrl(uri);
 
-        /**
-         * Removes the config path from the URI if present.
-         * Also replaces `\` with `/`.
-         *
-         * This ensures that any given file should compute to the same URI no matter where the user's app data folder is, or what OS the game is running on.
-         */
-        private string SanitizeUrl(string uri) {
-            return uri.Replace(configPath, "").Replace(@"\", "/");
-        }
+        if (data.TryGetValue(uri, out var value)) return GUID.Parse(value);
+        return null;
+    }
 
-        public void Add(string uri, GUID guid) {
-            uri = SanitizeUrl(uri);
+    /**
+     * Removes the config path from the URI if present.
+     * Also replaces `\` with `/`.
+     *
+     * This ensures that any given file should compute to the same URI no matter where the user's app data folder is, or what OS the game is running on.
+     */
+    private string SanitizeUrl(string uri) {
+        return uri.Replace(configPath, "").Replace(@"\", "/");
+    }
 
-            data[uri] = guid.ToString();
+    public void Add(string uri, GUID guid) {
+        uri = SanitizeUrl(uri);
 
-            Save();
-        }
+        data[uri] = guid.ToString();
 
-        private void Save() {
-            try {
-                var json = JsonConvert.SerializeObject(data, Formatting.Indented);
-                Directory.CreateDirectory(configPath);
-                File.WriteAllText(configFile, json);
-            } catch (Exception e) {
-                Debug.LogError(e.Message);
-            }
+        Save();
+    }
+
+    private void Save() {
+        try {
+            var json = JsonConvert.SerializeObject(data, Formatting.Indented);
+            Directory.CreateDirectory(configPath);
+            File.WriteAllText(configFile, json);
+        } catch (Exception e) {
+            Debug.LogError(e.Message);
         }
     }
 }
